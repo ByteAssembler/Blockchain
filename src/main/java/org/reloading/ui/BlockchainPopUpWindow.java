@@ -11,11 +11,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class PopUp<T extends BlockDataProvider> extends JDialog {
+public class BlockchainPopUpWindow extends JDialog {
 
     private final JTable table;
 
-    public PopUp(BlockchainWindow mainWindow, Block block) {
+    public BlockchainPopUpWindow(BlockchainMainWindow mainWindow, Block block) {
         super(mainWindow, "Transactions of block " + block.getUuid(), true);
         setModal(true);
 
@@ -28,12 +28,12 @@ public class PopUp<T extends BlockDataProvider> extends JDialog {
 
 
         // Must contain at least one transaction
-        var blockDataList = block.getData().getUnmodifiableList();
+        var blockDataList = block.getUnmodifiableTransactions();
 
         String[] columnNames = blockDataList.get(0).getColumnNamesForTable();
         String[][] data = blockDataList.stream().map(BlockDataProvider::getDataForTable).toArray(String[][]::new);
 
-        DefaultTableModel model = new DefaultTableModel(data, columnNames);
+        DefaultTableModel model = new ReadOnlyTableModel(data, columnNames);
         table = new JTable(model);
 
         JScrollPane scrollPane = new JScrollPane(table);
@@ -56,14 +56,14 @@ public class PopUp<T extends BlockDataProvider> extends JDialog {
     }
 
     public static <T extends BlockDataProvider> void open(Block block) {
-        var data = block.getData();
-        if (data == null || data.getUnmodifiableList().isEmpty()) return;
+        var data = block.getUnmodifiableTransactions();
+        if (data == null || data.isEmpty()) return;
 
 
-        BlockchainWindow mainWindow = null;
+        BlockchainMainWindow mainWindow = null;
         for (Window window : Window.getWindows()) {
-            if (window instanceof BlockchainWindow) {
-                mainWindow = (BlockchainWindow) window;
+            if (window instanceof BlockchainMainWindow) {
+                mainWindow = (BlockchainMainWindow) window;
                 break;
             }
         }
@@ -71,12 +71,12 @@ public class PopUp<T extends BlockDataProvider> extends JDialog {
         if (mainWindow != null) {
             mainWindow.setEnabled(false);
 
-            PopUp<T> popUp = new PopUp<>(mainWindow, block);
+            BlockchainPopUpWindow popUp = new BlockchainPopUpWindow(mainWindow, block);
             popUp.setVisible(true);
         }
     }
 
-    private void close(BlockchainWindow mainWindow) {
+    private void close(BlockchainMainWindow mainWindow) {
         dispose();
         mainWindow.setEnabled(true);
         mainWindow.toFront();

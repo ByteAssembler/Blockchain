@@ -1,15 +1,12 @@
 package org.reloading.ui;
 
 import org.reloading.blockchain.Blockchain;
-import org.reloading.blockchain.Transaction;
 import org.reloading.persons.Account;
 import org.reloading.persons.Accounts;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.UUID;
@@ -43,23 +40,21 @@ public class BlockchainWindow extends JFrame {
         accountSearchField = new JTextField();
         blockSearchField = new JTextField();
 
-        JButton leftAddButton = new JButton("Add Account");
-        JButton rightAddButton = new JButton("Add to Right");
+        accountSearchField.setVisible(false);
+        blockSearchField.setVisible(false);
 
-        leftAddButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Account account = CreateAccountDialog.createAccount();
-                update(blockchain);
-                // addElement(accountTableModel, accountSearchField.getText());
-            }
+        JButton leftAddButton = new JButton("Add Account");
+        JButton rightAddButton = new JButton("Is valid?");
+
+        leftAddButton.addActionListener(e -> {
+            Account account = CreateAccountDialog.createAccount();
+            update(blockchain);
         });
 
-        rightAddButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addElement(blockTableModel, blockSearchField.getText());
-            }
+        rightAddButton.addActionListener(e -> {
+            boolean isValid = blockchain.validateBlockchain();
+
+            JOptionPane.showMessageDialog(null, "The blockchain is " + (isValid ? "" : "not ") + "valid.", "Error", isValid ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
         });
 
         JPanel leftPanel = createTablePanel(accountTable, accountSearchField, leftAddButton);
@@ -94,6 +89,10 @@ public class BlockchainWindow extends JFrame {
         setVisible(true);
     }
 
+    public static void open(Blockchain blockchain) {
+        SwingUtilities.invokeLater(() -> new BlockchainWindow(blockchain));
+    }
+
     private JPanel createTablePanel(JTable table, JTextField searchField, JButton addButton) {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -115,49 +114,27 @@ public class BlockchainWindow extends JFrame {
 
 
         Accounts.getAccount().forEach(account -> {
-            accountTableModel.addRow(new Object[]{
-                    account.getPersonUUID(),
-                    account.getPersonName(),
-                    account.getBalance()
-            });
+            accountTableModel.addRow(new Object[]{account.getPersonUUID(), account.getPersonName(), account.getBalance()});
         });
 
         blockchain.getBlocks().forEach(block -> {
-            var data = block.getData();
-            blockTableModel.addRow(new String[]{
-                    block.getUuid().toString(),
-                    block.getCreationDateTime().toString(),
-                    data == null ? "null" : data.toString(),
-                    block.getPreviousHash(),
-                    block.getHash()
-            });
+            var data = block.getUnmodifiableTransactions();
+            if (data != null)
+                blockTableModel.addRow(new String[]{block.getUuid().toString(), block.getCreationDateTime().toString(), data.toString(), block.getPreviousHash(), block.getHash()});
         });
-    }
-
-    private void addElement(DefaultTableModel model, String element) {
-        if (!element.isEmpty()) {
-            model.addRow(new Object[]{element});
-        }
-    }
-
-    public static void open(Blockchain blockchain) {
-        SwingUtilities.invokeLater(() -> new BlockchainWindow(blockchain));
     }
 
     private void addRightClickDeletion(JTable table, Blockchain blockchain) {
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem deleteItem = new JMenuItem("Delete Block");
 
-        deleteItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow != -1) {
-                    ((DefaultTableModel) table.getModel()).removeRow(selectedRow);
+        deleteItem.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                ((DefaultTableModel) table.getModel()).removeRow(selectedRow);
 
-                    blockchain.removeBlockByIndex(selectedRow);
-                    update(blockchain);
-                }
+                blockchain.removeBlockByIndex(selectedRow);
+                update(blockchain);
             }
         });
 

@@ -17,7 +17,7 @@ public class Block<T> implements Print {
     private long nonce = 0;
 
 
-    public Block(UUID uuid, String previousHash, ListWrapper<T> data, Date creationDateTime) {
+    public Block(UUID uuid, String previousHash, ListWrapper<T> data, final Date creationDateTime) {
         this.uuid = uuid;
         this.previousHash = previousHash;
         this.data = data;

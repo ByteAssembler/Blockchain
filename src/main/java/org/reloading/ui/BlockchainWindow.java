@@ -25,7 +25,7 @@ public class BlockchainWindow extends JFrame {
         super("Blockchain");
 
         accountTableModel = new AccountTable();
-        blockTableModel = new BlockchainTable();
+        blockTableModel = new ReadOnlyTableModel();
 
         accountTableModel.addColumn("UUID");
         accountTableModel.addColumn("Name");
@@ -209,13 +209,6 @@ public class BlockchainWindow extends JFrame {
             // Set the balance
             account.get().setBalance(balance);
             super.setValueAt(balance.toString(), row, column);
-        }
-    }
-
-    private static class BlockchainTable extends DefaultTableModel {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
         }
     }
 }

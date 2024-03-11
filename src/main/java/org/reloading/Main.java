@@ -22,24 +22,24 @@ public class Main {
 
         Accounts.print();
 
-        Blockchain<Transaction> blockchain = new Blockchain<>();
+        Blockchain blockchain = new Blockchain();
 
-        Block<Transaction> block1 = new Block<>(Arrays.asList(
+        Block block1 = new Block(Arrays.asList(
                 new Transaction(tom, max, 300),
                 new Transaction(tom, eva, 100)
         ));
 
-        Block<Transaction> block2 = new Block<>(List.of(
+        Block block2 = new Block(List.of(
                 new Transaction(max, eva, 1000)
         ));
 
-        Block<Transaction> block3 = new Block<>(Arrays.asList(
+        Block block3 = new Block(Arrays.asList(
                 new Transaction(tom, eva, 900),
                 new Transaction(tom, max, 100),
                 new Transaction(eva, max, 30)
         ));
 
-        Block<Transaction> block4 = new Block<>(Arrays.asList(
+        Block block4 = new Block(Arrays.asList(
                 new Transaction(tom, eva, 900),
                 new Transaction(tom, max, 100),
                 new Transaction(eva, max, 30)

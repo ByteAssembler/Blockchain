@@ -7,41 +7,41 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-public class Block<T> implements Print {
+public class Block implements Print {
     private boolean changeable = true;
     private final UUID uuid;
     private final Date creationDateTime;
-    private final ListWrapper<T> data; // List<Transaction> transactions;
+    private final ListWrapper data; // List<Transaction> transactions;
     private String previousHash;
     private String hash = null;
     private long nonce = 0;
 
 
-    public Block(UUID uuid, String previousHash, ListWrapper<T> data, final Date creationDateTime) {
+    public Block(UUID uuid, String previousHash, ListWrapper data, final Date creationDateTime) {
         this.uuid = uuid;
         this.previousHash = previousHash;
         this.data = data;
         this.creationDateTime = creationDateTime;
     }
 
-    public Block(UUID uuid, ListWrapper<T> data, Date creationDateTime) {
+    public Block(UUID uuid, ListWrapper data, Date creationDateTime) {
         this(uuid, null, data, creationDateTime);
     }
 
-    public Block(UUID uuid, String previousHash, ListWrapper<T> data) {
+    public Block(UUID uuid, String previousHash, ListWrapper data) {
         this(uuid, previousHash, data, new Date());
     }
 
-    public Block(String previousHash, ListWrapper<T> data) {
+    public Block(String previousHash, ListWrapper data) {
         this(UUID.randomUUID(), previousHash, data);
     }
 
-    public Block(ListWrapper<T> data) {
+    public Block(ListWrapper data) {
         this(null, data);
     }
 
-    public Block(List<T> data) {
-        this(null, new ListWrapper<>(data));
+    public Block(List<Transaction> data) {
+        this(null, new ListWrapper(data));
     }
 
 
@@ -54,7 +54,7 @@ public class Block<T> implements Print {
     }
 
     @Deprecated
-    public ListWrapper<T> getData() {
+    public ListWrapper getData() {
         return data;
     }
 
@@ -105,11 +105,11 @@ public class Block<T> implements Print {
         return isGenesisBlock() && isValid();
     }
 
-    public static <TT> Block<TT> createGenesisBlock() {
+    public static Block createGenesisBlock() {
         UUID genesisUUID = new UUID(0, 0);
         String emptyHash = "0".repeat(64);
 
-        Block<TT> genesisBlock = new Block<TT>(genesisUUID, emptyHash, null); // new TT(),
+        Block genesisBlock = new Block(genesisUUID, emptyHash, null);
         genesisBlock.mine();
         return genesisBlock;
     }

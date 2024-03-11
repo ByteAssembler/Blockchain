@@ -21,7 +21,7 @@ public class BlockchainWindow extends JFrame {
     private final JTextField accountSearchField;
     private final JTextField blockSearchField;
 
-    public BlockchainWindow(Blockchain<Transaction> blockchain) {
+    public BlockchainWindow(Blockchain blockchain) {
         super("Blockchain");
 
         accountTableModel = new AccountTable();
@@ -109,7 +109,7 @@ public class BlockchainWindow extends JFrame {
         return panel;
     }
 
-    public void update(Blockchain<Transaction> blockchain) {
+    public void update(Blockchain blockchain) {
         accountTableModel.setRowCount(0);
         blockTableModel.setRowCount(0);
 
@@ -140,11 +140,11 @@ public class BlockchainWindow extends JFrame {
         }
     }
 
-    public static void open(Blockchain<Transaction> blockchain) {
+    public static void open(Blockchain blockchain) {
         SwingUtilities.invokeLater(() -> new BlockchainWindow(blockchain));
     }
 
-    private void addRightClickDeletion(JTable table, Blockchain<Transaction> blockchain) {
+    private void addRightClickDeletion(JTable table, Blockchain blockchain) {
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem deleteItem = new JMenuItem("Delete Block");
 

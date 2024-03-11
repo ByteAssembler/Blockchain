@@ -55,11 +55,11 @@ public class Transaction implements BlockDataProvider {
     @Override
     public void perform() {
         try {
-            if (verifyTransaction()){
+            if (verifyTransaction()) {
                 accountSender.removeAmount(amount);
                 accountReceiver.addAmount(amount);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

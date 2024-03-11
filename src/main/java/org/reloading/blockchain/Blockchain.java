@@ -9,8 +9,8 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Blockchain<T extends BlockDataProvider> implements Print {
-    private final List<Block<T>> blocks;
+public class Blockchain implements Print {
+    private final List<Block> blocks;
 
     public static int hashPrefixDifficulty = 4;
     public static String difficultyPrefix = "0".repeat(hashPrefixDifficulty);
@@ -19,7 +19,7 @@ public class Blockchain<T extends BlockDataProvider> implements Print {
         this(new ArrayList<>());
     }
 
-    public Blockchain(List<Block<T>> blocks) {
+    public Blockchain(List<Block> blocks) {
         if (blocks == null) throw new IllegalArgumentException("List<Block> blocks cannot be null!");
         if (blocks.isEmpty()) blocks.add(Block.createGenesisBlock());
         this.blocks = blocks;
@@ -32,24 +32,26 @@ public class Blockchain<T extends BlockDataProvider> implements Print {
         blocks.remove(index);
     }
 
-    public void addBlock(Block<T> block) throws BlockInvalidException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    public void addBlock(Block block) throws BlockInvalidException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         if (block == null)
             throw new IllegalArgumentException("Block cannot be null");
         // throw new IllegalArgumentException("A non genesis block must contain at least one transaction");
 
         if (blocks.isEmpty()) {
             // This is the genesis block
-            if (block.isGenesisBlockAndIsValid())
-                throw new BlockInvalidException("Genesis block is already set or genesis block is not valid!");
+            if (!block.isGenesisBlock())
+                throw new BlockInvalidException("First Block in Blockchain has to be a Genesis Block!");
+            if (!block.isValid())
+                throw new BlockInvalidException("Block is invalid!");
             blocks.add(block);
             return;
         }
 
         // Current block set the previous hash to the hash of the previous block
-        Block<T> previousBlock = getPreviousBlock();
+        Block previousBlock = getPreviousBlock();
         block.setPreviousHash(previousBlock.getHash());
 
-        ListWrapper<T> data = block.getData();
+        ListWrapper data = block.getData();
 
         // Check if sender and receiver are not the same person (in Transaction Constructor)
 
@@ -79,7 +81,7 @@ public class Blockchain<T extends BlockDataProvider> implements Print {
         block.print();
     }
 
-    public Block<T> getPreviousBlock() {
+    public Block getPreviousBlock() {
         return blocks.get(blocks.size() - 1);
     }
 
@@ -88,8 +90,8 @@ public class Blockchain<T extends BlockDataProvider> implements Print {
         if (blocks.size() == 1) return blocks.get(0).isGenesisBlockAndIsValid();
 
         for (int i = 1; i < blocks.size(); i++) {
-            Block<T> currentBlock = blocks.get(i);
-            Block<T> previousBlock = blocks.get(i - 1);
+            Block currentBlock = blocks.get(i);
+            Block previousBlock = blocks.get(i - 1);
 
             String currentBlockPreviousHash = currentBlock.getPreviousHash();
             String previousBlockHash = previousBlock.getHash();
@@ -103,14 +105,14 @@ public class Blockchain<T extends BlockDataProvider> implements Print {
         return true;
     }
 
-    public List<Block<T>> getBlocks() {
+    public List<Block> getBlocks() {
         return blocks;
     }
 
     @Override
     public void print() {
         System.out.println("Blockchain:");
-        for (Block<T> block : blocks) {
+        for (Block block : blocks) {
             System.out.print("- ");
             block.print();
         }

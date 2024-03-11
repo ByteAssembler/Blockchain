@@ -15,7 +15,7 @@ public class PopUp<T extends BlockDataProvider> extends JDialog {
 
     private final JTable table;
 
-    public PopUp(BlockchainWindow mainWindow, Block<T> block) {
+    public PopUp(BlockchainWindow mainWindow, Block block) {
         super(mainWindow, "Transactions of block " + block.getUuid(), true);
         setModal(true);
 
@@ -55,7 +55,7 @@ public class PopUp<T extends BlockDataProvider> extends JDialog {
         setLocationRelativeTo(mainWindow);
     }
 
-    public static <T extends BlockDataProvider> void open(Block<T> block) {
+    public static <T extends BlockDataProvider> void open(Block block) {
         var data = block.getData();
         if (data == null || data.getUnmodifiableList().isEmpty()) return;
 

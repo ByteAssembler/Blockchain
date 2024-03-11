@@ -6,28 +6,28 @@ import java.security.SignatureException;
 import java.util.Collections;
 import java.util.List;
 
-public class ListWrapper<T> {
-    private final List<T> list;
+public class ListWrapper {
+    private final List<Transaction> list;
 
-    public ListWrapper(List<T> list) {
+    public ListWrapper(List<Transaction> list) {
         this.list = list;
     }
 
-    public List<T> getUnmodifiableList() {
+    public List<Transaction> getUnmodifiableList() {
         return Collections.unmodifiableList(list);
     }
 
-    @Deprecated // It can panic
+    @Deprecated
     public boolean isValid() {
-        return Transaction.validateTransitionsByUUID((List<Transaction>) getUnmodifiableList());
+        return Transaction.validateTransitionsByUUID(getUnmodifiableList());
     }
 
     public void perform() {
-        ((List<Transaction>) list).forEach(BlockDataProvider::perform);
+        list.forEach(BlockDataProvider::perform);
     }
 
     public void signTransaction() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        for (T transaction : list) ((Transaction) transaction).signTransaction();
+        for (Transaction transaction : list) transaction.signTransaction();
     }
 
     @Override

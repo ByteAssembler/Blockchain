@@ -11,14 +11,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.UUID;
 
-public class BlockchainWindow extends JFrame {
+public class BlockchainMainWindow extends JFrame {
 
     private final DefaultTableModel accountTableModel;
     private final DefaultTableModel blockTableModel;
     private final JTextField accountSearchField;
     private final JTextField blockSearchField;
 
-    public BlockchainWindow(Blockchain blockchain) {
+    public BlockchainMainWindow(Blockchain blockchain) {
         super("Blockchain");
 
         accountTableModel = new AccountTable();
@@ -90,7 +90,7 @@ public class BlockchainWindow extends JFrame {
     }
 
     public static void open(Blockchain blockchain) {
-        SwingUtilities.invokeLater(() -> new BlockchainWindow(blockchain));
+        SwingUtilities.invokeLater(() -> new BlockchainMainWindow(blockchain));
     }
 
     private JPanel createTablePanel(JTable table, JTextField searchField, JButton addButton) {
@@ -154,7 +154,7 @@ public class BlockchainWindow extends JFrame {
                     if (e.getClickCount() == 2) {
                         int row = table.rowAtPoint(e.getPoint());
                         var block = blockchain.getBlocks().get(row);
-                        PopUp.open(block);
+                        BlockchainPopUpWindow.open(block);
                     }
                 }
             }

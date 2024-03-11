@@ -3,45 +3,45 @@ package org.reloading.blockchain;
 import org.reloading.Print;
 import org.reloading.secure.Encrypt;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public class Block implements Print {
-    private boolean changeable = true;
+    private boolean mined = false;
     private final UUID uuid;
     private final Date creationDateTime;
-    private final ListWrapper data; // List<Transaction> transactions;
+    private final List<Transaction> transactions;
     private String previousHash;
     private String hash = null;
     private long nonce = 0;
 
 
-    public Block(UUID uuid, String previousHash, ListWrapper data, final Date creationDateTime) {
+    public Block(UUID uuid, String previousHash, List<Transaction> transactions, final Date creationDateTime) {
         this.uuid = uuid;
         this.previousHash = previousHash;
-        this.data = data;
+        this.transactions = transactions;
         this.creationDateTime = creationDateTime;
     }
 
-    public Block(UUID uuid, ListWrapper data, Date creationDateTime) {
-        this(uuid, null, data, creationDateTime);
+    public Block(UUID uuid, List<Transaction> transactions, Date creationDateTime) {
+        this(uuid, null, transactions, creationDateTime);
     }
 
-    public Block(UUID uuid, String previousHash, ListWrapper data) {
-        this(uuid, previousHash, data, new Date());
+    public Block(UUID uuid, String previousHash, List<Transaction> transactions) {
+        this(uuid, previousHash, transactions, new Date());
     }
 
-    public Block(String previousHash, ListWrapper data) {
-        this(UUID.randomUUID(), previousHash, data);
+    public Block(String previousHash, List<Transaction> transactions) {
+        this(UUID.randomUUID(), previousHash, transactions);
     }
 
-    public Block(ListWrapper data) {
-        this(null, data);
-    }
-
-    public Block(List<Transaction> data) {
-        this(null, new ListWrapper(data));
+    public Block(List<Transaction> transactions) {
+        this(null, transactions);
     }
 
 
@@ -54,8 +54,14 @@ public class Block implements Print {
     }
 
     @Deprecated
-    public ListWrapper getData() {
-        return data;
+    public List<Transaction> getTransactions() {
+        if (transactions == null) return Collections.emptyList();
+        return transactions;
+    }
+
+    public List<Transaction> getUnmodifiableTransactions() {
+        if (transactions == null) return Collections.emptyList();
+        return Collections.unmodifiableList(transactions);
     }
 
     public void setPreviousHash(String previousHash) {
@@ -85,20 +91,21 @@ public class Block implements Print {
             calculateHash();
         }
 
-        changeable = false;
+        mined = true;
     }
 
     public boolean isMined() {
-        return changeable;
+        return mined;
     }
 
     public boolean isGenesisBlock() {
-        return data == null;
+        return transactions == null;
     }
 
     public boolean isValid() {
         return this.hash.startsWith(Blockchain.difficultyPrefix)
-                && this.previousHash.startsWith(Blockchain.difficultyPrefix);
+                && this.previousHash.startsWith(Blockchain.difficultyPrefix)
+                && areTransactionsValid();
     }
 
     public boolean isGenesisBlockAndIsValid() {
@@ -114,12 +121,25 @@ public class Block implements Print {
         return genesisBlock;
     }
 
+
+    public boolean areTransactionsValid() {
+        return Transaction.validateTransitionsByUUID(getUnmodifiableTransactions());
+    }
+
+    public void perform() {
+        transactions.forEach(BlockDataProvider::perform);
+    }
+
+    public void signTransaction() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+        for (Transaction transaction : transactions) transaction.signTransaction();
+    }
+
     @Override
     public String toString() {
         return "Block{" +
                 "\n\tuuid=" + uuid +
                 ", \n\tcreationDateTime=" + creationDateTime +
-                ", \n\tdata=" + data +
+                ", \n\tdata=" + transactions +
                 ", \n\tpreviousHash='" + previousHash + '\'' +
                 ", \n\thash='" + hash + '\'' +
                 ", \n\tnoise=" + nonce +

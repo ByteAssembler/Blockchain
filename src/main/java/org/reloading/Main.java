@@ -6,7 +6,7 @@ import org.reloading.blockchain.Transaction;
 import org.reloading.exceptions.BlockInvalidException;
 import org.reloading.persons.Account;
 import org.reloading.persons.Accounts;
-import org.reloading.ui.BlockchainWindow;
+import org.reloading.ui.BlockchainMainWindow;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -61,6 +61,6 @@ public class Main {
 
         Accounts.print();
 
-        BlockchainWindow.open(blockchain);
+        BlockchainMainWindow.open(blockchain);
     }
 }

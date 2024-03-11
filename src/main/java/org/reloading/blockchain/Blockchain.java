@@ -7,6 +7,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Blockchain implements Print {
@@ -51,15 +52,13 @@ public class Blockchain implements Print {
         Block previousBlock = getPreviousBlock();
         block.setPreviousHash(previousBlock.getHash());
 
-        ListWrapper data = block.getData();
-
         // Check if sender and receiver are not the same person (in Transaction Constructor)
 
         // Check if the multiple sender have enough money to send
-        if (!data.isValid()) // if (!block.validateTransitionsByUUID())
-            throw new BlockInvalidException("Data is not valid"); // "Block: Transaction/s are not valid"
+        if (!block.areTransactionsValid()) // if (!block.validateTransitionsByUUID())
+            throw new BlockInvalidException("Block: Transaction/s are not valid");
 
-        data.signTransaction();
+        block.signTransaction();
 
         // Mine the block
         block.mine();
@@ -71,14 +70,14 @@ public class Blockchain implements Print {
         // Update the balance of the sender
         // Update the balance of the receiver
         // TODO: block.getTransactions().forEach(Transaction::performTransaction);
-        data.perform(); // TODO: check
+        block.perform(); // TODO: check
 
         // Add block to the blockchain
         blocks.add(block);
 
         // Print
-        System.out.print("Block added: ");
-        block.print();
+        // System.out.print("Block added: ");
+        // block.print();
     }
 
     public Block getPreviousBlock() {
@@ -87,7 +86,7 @@ public class Blockchain implements Print {
 
     public boolean validateBlockchain() {
         if (blocks.isEmpty()) return false;
-        if (blocks.size() == 1) return blocks.get(0).isGenesisBlockAndIsValid();
+        if (!blocks.get(0).isGenesisBlockAndIsValid()) return false;
 
         for (int i = 1; i < blocks.size(); i++) {
             Block currentBlock = blocks.get(i);

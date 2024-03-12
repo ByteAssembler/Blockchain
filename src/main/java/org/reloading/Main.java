@@ -5,7 +5,6 @@ import org.reloading.blockchain.Blockchain;
 import org.reloading.blockchain.Transaction;
 import org.reloading.exceptions.BlockInvalidException;
 import org.reloading.persons.Account;
-import org.reloading.persons.Accounts;
 import org.reloading.ui.BlockchainMainWindow;
 
 import java.security.InvalidKeyException;
@@ -19,8 +18,6 @@ public class Main {
         Account tom = new Account("Tom", 1400);
         Account max = new Account("Max", 3500);
         Account eva = new Account("Eva", 1400);
-
-        Accounts.print();
 
         Blockchain blockchain = new Blockchain();
 
@@ -56,10 +53,6 @@ public class Main {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-
-        // blockchain.print();
-
-        Accounts.print();
 
         BlockchainMainWindow.open(blockchain);
     }

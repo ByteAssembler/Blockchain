@@ -3,6 +3,7 @@ package org.reloading.persons;
 import org.reloading.Print;
 import org.reloading.secure.KeyPairGenerator;
 
+import java.math.BigDecimal;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
@@ -12,10 +13,10 @@ import static org.reloading.persons.Accounts.account;
 
 public class Account implements Print {
     private final Person person;
-    private double balance;
+    private BigDecimal balance;
     private final KeyPair keyPair;
 
-    public Account(Person person, double balance) {
+    public Account(Person person, BigDecimal balance) {
         this.person = person;
         this.balance = balance;
 
@@ -24,8 +25,12 @@ public class Account implements Print {
         account.add(this);
     }
 
-    public Account(String personName, double balance) {
+    public Account(String personName, BigDecimal balance) {
         this(new Person(personName), balance);
+    }
+
+    public Account(String personName, double balance) {
+        this(new Person(personName), BigDecimal.valueOf(balance));
     }
 
     public String getPersonName() {
@@ -40,13 +45,13 @@ public class Account implements Print {
         return person;
     }
 
-    public double getBalance() {
+    public BigDecimal getBalance() {
         return this.balance;
     }
 
     // Only for the CLI
     @Deprecated
-    public void setBalance(double balance) {
+    public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
 
@@ -70,14 +75,15 @@ public class Account implements Print {
         return sig.verify(signatureBytes);
     }
 
-    public void addAmount(double amount) {
-        this.balance += amount;
+    public void addAmount(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
+        // this.balance += amount;
     }
 
-    public void removeAmount(double amount) {
-        double tmp = this.balance - amount;
+    public void removeAmount(BigDecimal amount) {
+        BigDecimal tmp = this.balance.subtract(amount);
 
-        if (tmp < 0.0D)
+        if (tmp.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException("Account: Not enough money to remove " + amount + " from " + getPersonName() + " (" + this.balance + ")");
         else this.balance = tmp;
     }

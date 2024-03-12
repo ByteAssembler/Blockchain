@@ -3,6 +3,7 @@ package org.reloading.ui;
 import org.reloading.persons.Account;
 
 import javax.swing.*;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public class CreateAccountDialog {
@@ -49,11 +50,13 @@ public class CreateAccountDialog {
         }
     }
 
-    public static Optional<Double> convertDollarAmount(String amountStr) {
+    public static Optional<BigDecimal> convertDollarAmount(String amountStr) {
         amountStr = amountStr.replace("$", "").replace(",", "");
 
         try {
-            return Optional.of(Double.parseDouble(amountStr));
+            var dub = Double.parseDouble(amountStr);
+            var big = BigDecimal.valueOf(dub);
+            return Optional.of(big);
         } catch (NumberFormatException e) {
             return Optional.empty();
         }

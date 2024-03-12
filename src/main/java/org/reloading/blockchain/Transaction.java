@@ -3,6 +3,7 @@ package org.reloading.blockchain;
 import org.reloading.exceptions.InvalidTransactionException;
 import org.reloading.persons.Account;
 
+import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
@@ -18,15 +19,14 @@ public class Transaction implements BlockDataProvider {
     private final UUID uuid;
     private final Account accountSender;
     private final Account accountReceiver;
-    private final double amount;
+    private final BigDecimal amount;
     private String signature;
 
-    public Transaction(final Account accountSender, final Account accountReceiver, final double amount) {
-        if (amount <= 0) throw new InvalidTransactionException("Amount must be positive");
+    public Transaction(final Account accountSender, final Account accountReceiver, final BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidTransactionException("Amount must be positive");
 
         if (accountSender.equals(accountReceiver)) throw new InvalidTransactionException("Transaction: Sender and " +
                 "receiver cannot be the same person");
-
 
         /*
         // Check if the sender has enough money to send
@@ -39,6 +39,10 @@ public class Transaction implements BlockDataProvider {
         this.accountSender = accountSender;
         this.accountReceiver = accountReceiver;
         this.amount = amount;
+    }
+
+    public Transaction(final Account accountSender, final Account accountReceiver, final double amount) {
+        this(accountSender, accountReceiver, BigDecimal.valueOf(amount));
     }
 
     @Override
@@ -92,7 +96,7 @@ public class Transaction implements BlockDataProvider {
         return accountReceiver;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
@@ -116,7 +120,7 @@ public class Transaction implements BlockDataProvider {
     }
 
     public static boolean validateTransitionsByUUID(List<Transaction> transactions) {
-        HashMap<UUID, Double> map = new HashMap<>(transactions.size());
+        HashMap<UUID, BigDecimal> map = new HashMap<>(transactions.size());
 
         for (Transaction transaction : transactions) {
             Account sender = transaction.getAccountSender();
@@ -128,9 +132,9 @@ public class Transaction implements BlockDataProvider {
             map.putIfAbsent(senderUUID, sender.getBalance()); // if sender not in map, add it
             map.putIfAbsent(receiverUUID, receiver.getBalance()); // if receiver not in map, add it
 
-            double newBalanceSender = map.get(senderUUID) - transaction.getAmount();
-            double newBalanceReceiver = map.get(receiverUUID) + transaction.getAmount();
-            if (newBalanceSender < 0) return false;
+            BigDecimal newBalanceSender = map.get(senderUUID).subtract(transaction.getAmount());
+            BigDecimal newBalanceReceiver = map.get(receiverUUID).add(transaction.getAmount());
+            if (newBalanceReceiver.compareTo(BigDecimal.ZERO) < 0) return false;
 
             map.put(senderUUID, newBalanceSender);
             map.put(receiverUUID, newBalanceReceiver);

@@ -19,22 +19,24 @@ public class Accounts {
         account.forEach(Account::print);
     }
 
+    public static Optional<Account> getAccountBySimilarPersonName(String personName) {
+        return account.stream().filter(account -> account.getPersonName().equalsIgnoreCase(personName)).findFirst();
+    }
+
+    public static boolean checkIfAccountWithPersonNameExists(String personName) {
+        return account.stream().anyMatch(account -> account.getPersonName().equalsIgnoreCase(personName));
+    }
+
     public static Optional<Account> getAccountByPersonName(String personName) {
-        return account.stream()
-                .filter(account -> account.getPersonName().equals(personName))
-                .findFirst();
+        return account.stream().filter(account -> account.getPersonName().equals(personName)).findFirst();
     }
 
     public static Optional<Account> getAccountByPersonUUID(UUID personUUID) {
-        return account.stream()
-                .filter(account -> account.getPersonUUID().equals(personUUID))
-                .findFirst();
+        return account.stream().filter(account -> account.getPersonUUID().equals(personUUID)).findFirst();
     }
 
     public static Optional<Account> getAccountByPerson(Person person) {
-        return account.stream()
-                .filter(account -> account.getPerson().equals(person))
-                .findFirst();
+        return account.stream().filter(account -> account.getPerson().equals(person)).findFirst();
     }
 
     public static Optional<Account> getAccountByPersonNameOrPersonUUID(String nameOrUUID) {
@@ -45,10 +47,8 @@ public class Accounts {
             personUUID = null;
         }
 
-        if (personUUID != null)
-            return getAccountByPersonUUID(personUUID);
-        else
-            return getAccountByPersonName(nameOrUUID);
+        if (personUUID != null) return getAccountByPersonUUID(personUUID);
+        else return getAccountByPersonName(nameOrUUID);
 
     }
 }

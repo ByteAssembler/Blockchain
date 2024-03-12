@@ -1,6 +1,8 @@
 package org.reloading.persons;
 
 import org.reloading.Print;
+import org.reloading.exceptions.NegativeAmountException;
+import org.reloading.exceptions.NotEnoughMoneyException;
 import org.reloading.secure.KeyPairGenerator;
 
 import java.math.BigDecimal;
@@ -21,6 +23,10 @@ public class Account implements Print {
         this.balance = balance;
 
         keyPair = KeyPairGenerator.generateKeyPair();
+
+        // Check if the account already exists - only for the CLI
+        if (Accounts.checkIfAccountWithPersonNameExists(person.getName()))
+            throw new IllegalArgumentException("Account: Account with name (similar) " + person.getName() + " already exists.");
 
         account.add(this);
     }
@@ -80,11 +86,11 @@ public class Account implements Print {
         // this.balance += amount;
     }
 
-    public void removeAmount(BigDecimal amount) {
+    public void removeAmount(BigDecimal amount) throws NotEnoughMoneyException {
         BigDecimal tmp = this.balance.subtract(amount);
 
         if (tmp.compareTo(BigDecimal.ZERO) < 0)
-            throw new IllegalArgumentException("Account: Not enough money to remove " + amount + " from " + getPersonName() + " (" + this.balance + ")");
+            throw new NotEnoughMoneyException("Account: Not enough money to remove " + amount + " from " + getPersonName() + " (" + this.balance + ")");
         else this.balance = tmp;
     }
 

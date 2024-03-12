@@ -12,8 +12,8 @@ public interface BlockDataProvider {
     void undo();
     boolean isValid();
 
-    void signTransaction() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException;
-    boolean verifyTransaction() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException;
+    void sign() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException;
+    boolean verify() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException;
 
     String[] getColumnNamesForTable();
     String[] getDataForTable();

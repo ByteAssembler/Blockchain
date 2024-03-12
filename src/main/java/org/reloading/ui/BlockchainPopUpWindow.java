@@ -11,6 +11,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import static org.reloading.ui.BlockchainMainWindow.closeForPopups;
+
 public class BlockchainPopUpWindow extends JDialog {
 
     private final JTable table;
@@ -22,7 +24,7 @@ public class BlockchainPopUpWindow extends JDialog {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                close(mainWindow);
+                closeForPopups(mainWindow, BlockchainPopUpWindow.this);
             }
         });
 
@@ -42,7 +44,7 @@ public class BlockchainPopUpWindow extends JDialog {
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                close(mainWindow);
+                closeForPopups(mainWindow, BlockchainPopUpWindow.this);
             }
         });
 
@@ -55,30 +57,5 @@ public class BlockchainPopUpWindow extends JDialog {
         setLocationRelativeTo(mainWindow);
     }
 
-    public static <T extends BlockDataProvider> void open(Block block) {
-        var data = block.getUnmodifiableTransactions();
-        if (data == null || data.isEmpty()) return;
 
-
-        BlockchainMainWindow mainWindow = null;
-        for (Window window : Window.getWindows()) {
-            if (window instanceof BlockchainMainWindow) {
-                mainWindow = (BlockchainMainWindow) window;
-                break;
-            }
-        }
-
-        if (mainWindow != null) {
-            mainWindow.setEnabled(false);
-
-            BlockchainPopUpWindow popUp = new BlockchainPopUpWindow(mainWindow, block);
-            popUp.setVisible(true);
-        }
-    }
-
-    private void close(BlockchainMainWindow mainWindow) {
-        dispose();
-        mainWindow.setEnabled(true);
-        mainWindow.toFront();
-    }
 }

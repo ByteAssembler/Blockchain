@@ -1,6 +1,7 @@
 package org.reloading.ui;
 
 import org.reloading.persons.Account;
+import org.reloading.persons.Accounts;
 
 import javax.swing.*;
 import java.math.BigDecimal;
@@ -9,7 +10,13 @@ import java.util.Optional;
 public class CreateAccountDialog {
     public static Account createAccount() {
         String name = getNameFromUser();
-        double initialAmount = getDollarAmountFromUser();
+        double initialAmount = InputUtility.getDollarAmountFromUser();
+
+        if (Accounts.checkIfAccountWithPersonNameExists(name)) {
+            JOptionPane.showMessageDialog(null, "Account with name (similar) " + name + " already exists.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return createAccount();
+        }
 
         Account account = new Account(name, initialAmount);
 
@@ -34,19 +41,6 @@ public class CreateAccountDialog {
             JOptionPane.showMessageDialog(null, "Name cannot be empty. Please enter a valid name.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return getNameFromUser();
-        }
-    }
-
-    private static double getDollarAmountFromUser() {
-        String amountStr = JOptionPane.showInputDialog(null, "Enter initial dollar amount:", "Create Account", JOptionPane.PLAIN_MESSAGE);
-        amountStr = amountStr.replace("$", "").replace(",", "");
-
-        try {
-            return Double.parseDouble(amountStr);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Invalid input for dollar amount. Please enter a valid number.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return getDollarAmountFromUser();
         }
     }
 

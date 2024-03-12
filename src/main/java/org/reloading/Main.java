@@ -5,6 +5,7 @@ import org.reloading.blockchain.Blockchain;
 import org.reloading.blockchain.Transaction;
 import org.reloading.exceptions.BlockInvalidException;
 import org.reloading.persons.Account;
+import org.reloading.persons.Accounts;
 import org.reloading.ui.BlockchainMainWindow;
 
 import java.security.InvalidKeyException;
@@ -21,26 +22,13 @@ public class Main {
 
         Blockchain blockchain = new Blockchain();
 
-        Block block1 = new Block(Arrays.asList(
-                new Transaction(tom, max, 300),
-                new Transaction(tom, eva, 100)
-        ));
+        Block block1 = new Block(Arrays.asList(new Transaction(tom, max, 300), new Transaction(tom, eva, 100)));
 
-        Block block2 = new Block(List.of(
-                new Transaction(max, eva, 1000)
-        ));
+        Block block2 = new Block(List.of(new Transaction(max, eva, 1000)));
 
-        Block block3 = new Block(Arrays.asList(
-                new Transaction(tom, eva, 900),
-                new Transaction(tom, max, 100),
-                new Transaction(eva, max, 30)
-        ));
+        Block block3 = new Block(Arrays.asList(new Transaction(tom, eva, 900), new Transaction(tom, max, 100), new Transaction(eva, max, 30)));
 
-        Block block4 = new Block(Arrays.asList(
-                new Transaction(tom, eva, 900),
-                new Transaction(tom, max, 100),
-                new Transaction(eva, max, 30)
-        ));
+        Block block4 = new Block(Arrays.asList(new Transaction(tom, eva, 900), new Transaction(tom, max, 100), new Transaction(eva, max, 30)));
 
         try {
             blockchain.addBlock(block1);
@@ -53,6 +41,8 @@ public class Main {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+
+        Accounts.print();
 
         BlockchainMainWindow.open(blockchain);
     }

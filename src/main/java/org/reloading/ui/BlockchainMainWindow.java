@@ -45,6 +45,7 @@ public class BlockchainMainWindow extends JFrame {
 
         JButton leftAddButton = new JButton("Add Account");
         JButton rightAddButton = new JButton("Is valid?");
+        rightAddButton.setVisible(false);
 
         leftAddButton.addActionListener(e -> {
             Account account = CreateAccountDialog.createAccount();
@@ -53,12 +54,17 @@ public class BlockchainMainWindow extends JFrame {
 
         rightAddButton.addActionListener(e -> {
             boolean isValid = blockchain.validateBlockchain();
-
             JOptionPane.showMessageDialog(null, "The blockchain is " + (isValid ? "" : "not ") + "valid.", "Error", isValid ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
         });
 
+        JButton addBlock = new JButton("Add Block");
+        addBlock.addActionListener(e -> {
+            WindowUtility.open(blockchain);
+            update(blockchain);
+        });
+
         JPanel leftPanel = createTablePanel(accountTable, accountSearchField, leftAddButton);
-        JPanel rightPanel = createTablePanel(blockTable, blockSearchField, rightAddButton);
+        JPanel rightPanel = createTablePanel(blockTable, addBlock, rightAddButton);
 
         addRightClickDeletion(blockTable, blockchain);
 
@@ -93,6 +99,12 @@ public class BlockchainMainWindow extends JFrame {
         SwingUtilities.invokeLater(() -> new BlockchainMainWindow(blockchain));
     }
 
+    public static void closeForPopups(BlockchainMainWindow mainWindow, JDialog dialog) {
+        dialog.dispose();
+        mainWindow.setEnabled(true);
+        mainWindow.toFront();
+    }
+
     private JPanel createTablePanel(JTable table, JTextField searchField, JButton addButton) {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -102,6 +114,21 @@ public class BlockchainMainWindow extends JFrame {
 
         controlPanel.add(searchField, BorderLayout.CENTER);
         controlPanel.add(addButton, BorderLayout.EAST);
+
+        panel.add(controlPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createTablePanel(JTable table, JButton button1, JButton button2) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JPanel controlPanel = new JPanel(new BorderLayout());
+
+        controlPanel.add(button1, BorderLayout.CENTER);
+        controlPanel.add(button2, BorderLayout.EAST);
 
         panel.add(controlPanel, BorderLayout.SOUTH);
 
@@ -154,7 +181,7 @@ public class BlockchainMainWindow extends JFrame {
                     if (e.getClickCount() == 2) {
                         int row = table.rowAtPoint(e.getPoint());
                         var block = blockchain.getBlocks().get(row);
-                        BlockchainPopUpWindow.open(block);
+                        WindowUtility.open(block);
                     }
                 }
             }

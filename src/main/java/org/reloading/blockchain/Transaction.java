@@ -10,10 +10,7 @@ import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Transaction implements BlockDataProvider {
     private final UUID uuid;
@@ -46,13 +43,13 @@ public class Transaction implements BlockDataProvider {
     }
 
     @Override
-    public void signTransaction() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public void sign() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         String transactionData = accountSender.getPersonUUID().toString() + accountReceiver.getPersonUUID().toString() + amount;
         this.signature = accountSender.signTransaction(transactionData);
     }
 
     @Override
-    public boolean verifyTransaction() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException {
+    public boolean verify() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException {
         if (signature == null) return false;
         String transactionData = accountSender.getPersonUUID().toString() + accountReceiver.getPersonUUID().toString() + amount;
         return accountReceiver.verifyTransaction(transactionData, signature, accountSender.getKeyPair().getPublic());
@@ -62,7 +59,7 @@ public class Transaction implements BlockDataProvider {
     @Override
     public void perform() {
         try {
-            if (verifyTransaction()) {
+            if (verify()) {
                 accountSender.removeAmount(amount);
                 accountReceiver.addAmount(amount);
             }
@@ -79,7 +76,6 @@ public class Transaction implements BlockDataProvider {
 
     @Override
     public boolean isValid() {
-        // TODO: change
         return validateTransitionsByUUID(List.of(this));
     }
 
@@ -104,9 +100,13 @@ public class Transaction implements BlockDataProvider {
         return signature;
     }
 
+    public static String[] getColumnNamesForTableStatic() {
+        return new String[]{"UUID", "Sender", "Receiver", "Amount"};
+    }
+
     @Override
     public String[] getColumnNamesForTable() {
-        return new String[]{"UUID", "Sender", "Receiver", "Amount"};
+        return getColumnNamesForTableStatic();
     }
 
     @Override

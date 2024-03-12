@@ -132,7 +132,7 @@ public class Block implements Print {
     }
 
     public void signTransaction() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        for (Transaction transaction : transactions) transaction.signTransaction();
+        for (Transaction transaction : transactions) transaction.sign();
     }
 
     @Override

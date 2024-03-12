@@ -7,15 +7,12 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Blockchain implements Print {
-    private final List<Block> blocks;
-
     public static int hashPrefixDifficulty = 4;
     public static String difficultyPrefix = "0".repeat(hashPrefixDifficulty);
+    private final List<Block> blocks;
 
     public Blockchain() {
         this(new ArrayList<>());
@@ -35,16 +32,14 @@ public class Blockchain implements Print {
     }
 
     public void addBlock(Block block) throws BlockInvalidException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
-        if (block == null)
-            throw new IllegalArgumentException("Block cannot be null");
+        if (block == null) throw new IllegalArgumentException("Block cannot be null");
         // throw new IllegalArgumentException("A non genesis block must contain at least one transaction");
 
         if (blocks.isEmpty()) {
             // This is the genesis block
             if (!block.isGenesisBlock())
                 throw new BlockInvalidException("First Block in Blockchain has to be a Genesis Block!");
-            if (!block.isValid())
-                throw new BlockInvalidException("Block is invalid!");
+            if (!block.isValid()) throw new BlockInvalidException("Block is invalid!");
             blocks.add(block);
             return;
         }

@@ -32,4 +32,21 @@ public class Person {
     public int hashCode() {
         return uuid.hashCode();
     }
+
+    public enum Type {
+        SENDER, RECEIVER;
+
+        public static Type fromString(String type) {
+            return switch (type) {
+                case "SENDER" -> SENDER;
+                case "RECEIVER" -> RECEIVER;
+                default -> throw new IllegalArgumentException("Invalid type: " + type);
+            };
+        }
+
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
 }

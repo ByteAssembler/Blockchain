@@ -9,6 +9,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Blockchain implements Print {
     private final List<Block> blocks;
@@ -88,6 +89,15 @@ public class Blockchain implements Print {
         if (blocks.isEmpty()) return false;
         if (!blocks.get(0).isGenesisBlockAndIsValid()) return false;
 
+        var finalBlock = blocks.stream().skip(1).reduce(blocks.get(0), (previousBlock, currentBlock) -> {
+            if (!currentBlock.getPreviousHash().equals(previousBlock.getHash())) return null;
+            if (!currentBlock.isValid()) return null;
+            return currentBlock;
+        });
+
+        return finalBlock != null;
+
+        /*
         for (int i = 1; i < blocks.size(); i++) {
             Block currentBlock = blocks.get(i);
             Block previousBlock = blocks.get(i - 1);
@@ -102,6 +112,7 @@ public class Blockchain implements Print {
         }
 
         return true;
+        */
     }
 
     public List<Block> getBlocks() {

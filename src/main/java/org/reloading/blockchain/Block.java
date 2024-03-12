@@ -73,8 +73,9 @@ public class Block implements Print {
         return previousHash;
     }
 
-    public void calculateHash() {
+    public String calculateHash() {
         hash = Encrypt.sha256(this.toString());
+        return hash;
     }
 
     @Deprecated

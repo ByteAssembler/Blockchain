@@ -7,18 +7,19 @@ import org.reloading.persons.Accounts;
 import java.util.Scanner;
 
 public class CLIController {
-    private CLIMenu menu;
-
+    private final CLIMenu menu;
     private boolean stopped;
-    public CLIController(){
+
+    public CLIController() {
         stopped = false;
 
         menu = new CLIMenu("Select an option:");
-        menu.addMenuItem(new CLIMenuItem("Create an account", () -> {
+
+        menu.addMenuItem("Create an account", () -> {
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter the Name: ");
+            System.out.print("Enter the name: ");
             String name = scanner.next();
-            System.out.print("Enter the Startamount: ");
+            System.out.print("Enter the start amount: ");
             double amount = scanner.nextDouble();
             try {
                 new Account(name, amount); // adds account to accounts
@@ -26,25 +27,22 @@ public class CLIController {
                 // TODO
                 throw new RuntimeException(e);
             }
-        }));
+        });
 
-        menu.addMenuItem(new CLIMenuItem("Show Accounts", Accounts::print));
+        menu.addMenuItem("Show Accounts", Accounts::print);
 
-        menu.addMenuItem(new CLIMenuItem("Quit", ()->{
-            this.stopped = true;
-        }));
+        menu.addMenuItem("Quit", () -> this.stopped = true);
+    }
+
+    void select(CLIView view) {
+        this.menu.getMenuItems().get(new Scanner(System.in).nextInt()).execute();
     }
 
     public CLIMenu getMenu() {
         return menu;
     }
 
-    void select(CLIView view){
-
-        this.menu.getMenuItems().get(new Scanner(System.in).nextInt()).execute();
-    }
-
-    boolean isStopped(){
+    boolean isStopped() {
         return stopped;
     }
 }

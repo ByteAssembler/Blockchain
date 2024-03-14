@@ -14,7 +14,8 @@ public class CreateAccountDialog {
         double initialAmount = InputUtility.getDollarAmountFromUser();
 
         if (Accounts.checkIfAccountWithPersonNameExists(name)) {
-            JOptionPane.showMessageDialog(null, "Account with name (similar) " + name + " already exists.",
+            JOptionPane.showMessageDialog(null,
+                    "Account with name (similar) " + name + " already exists.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return createAccount();
         }
@@ -29,25 +30,29 @@ public class CreateAccountDialog {
             throw new RuntimeException(e);
         }
 
-        JOptionPane.showMessageDialog(null, "Account created with UUID: " + account.getPersonUUID(),
+        JOptionPane.showMessageDialog(null,
+                "Account created with UUID: " + account.getPersonUUID(),
                 "Account Created", JOptionPane.INFORMATION_MESSAGE);
 
         return account;
     }
 
     private static String getNameFromUser() {
-        String name = JOptionPane.showInputDialog(null, "Enter account name:", "Create Account", JOptionPane.PLAIN_MESSAGE);
+        String name = JOptionPane.showInputDialog(null,
+                "Enter account name:", "Create Account", JOptionPane.PLAIN_MESSAGE);
 
         try {
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Name cannot be empty. Please enter a valid name.",
+                JOptionPane.showMessageDialog(null,
+                        "Name cannot be empty. Please enter a valid name.",
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return getNameFromUser();
             }
 
             return name;
         } catch (NullPointerException e) {
-            JOptionPane.showMessageDialog(null, "Name cannot be empty. Please enter a valid name.",
+            JOptionPane.showMessageDialog(null,
+                    "Name cannot be empty. Please enter a valid name.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return getNameFromUser();
         }

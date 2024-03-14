@@ -35,22 +35,14 @@ public class Main {
             block1.signTransactions();
             block2.signTransactions();
             block3.signTransactions();
+            // block4.signTransactions();
 
             blockchain.addBlock(block1);
             blockchain.addBlock(block2);
             blockchain.addBlock(block3);
             // blockchain.addBlock(block4);
-        } catch (NotEnoughMoneyException e) {
-            throw new RuntimeException(e);
-        } catch (BlockInvalidException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (SignatureException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeySpecException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeyException e) {
+        } catch (NotEnoughMoneyException | PreviousBlockInvalidException | BlockInvalidException |
+                 NoSuchAlgorithmException | SignatureException | InvalidKeySpecException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
 

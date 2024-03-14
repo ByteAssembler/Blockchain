@@ -1,5 +1,7 @@
 package org.reloading.ui;
 
+import org.jetbrains.annotations.Nullable;
+import org.reloading.blockchain.Block;
 import org.reloading.blockchain.Blockchain;
 import org.reloading.persons.Account;
 import org.reloading.persons.Accounts;
@@ -14,83 +16,44 @@ import java.util.UUID;
 public class BlockchainMainWindow extends JFrame {
 
     private final DefaultTableModel accountTableModel;
-    private final DefaultTableModel blockTableModel;
-    private final JTextField accountSearchField;
-    private final JTextField blockSearchField;
+    private final DefaultTableModel blockchainTableModel;
 
     public BlockchainMainWindow(Blockchain blockchain) {
         super("Blockchain");
 
-        accountTableModel = new AccountTable();
-        blockTableModel = new ReadOnlyTableModel();
-
-        accountTableModel.addColumn("UUID");
-        accountTableModel.addColumn("Name");
-        accountTableModel.addColumn("Balance");
-
-        blockTableModel.addColumn("UUID");
-        blockTableModel.addColumn("DateTime");
-        blockTableModel.addColumn("Data");
-        blockTableModel.addColumn("PreviousHash");
-        blockTableModel.addColumn("Hash");
+        accountTableModel = new AccountTable(Accounts.getColumnNamesForTable());
+        blockchainTableModel = new ReadOnlyTableModel(Block.getColumnNamesForTable());
 
         JTable accountTable = new JTable(accountTableModel);
-        JTable blockTable = new JTable(blockTableModel);
+        JTable blockchainTable = new JTable(blockchainTableModel);
 
-        accountSearchField = new JTextField();
-        blockSearchField = new JTextField();
-
-        accountSearchField.setVisible(false);
-        blockSearchField.setVisible(false);
-
-        JButton leftAddButton = new JButton("Add Account");
-        JButton rightAddButton = new JButton("Is valid?");
-        rightAddButton.setVisible(false);
-
-        leftAddButton.addActionListener(e -> {
+        JButton addAccountButton = WindowUtility.createButton("Add Account", e -> {
             Account account = CreateAccountDialog.createAccount();
-            update(blockchain);
+            updateContent(blockchain);
         });
 
-        rightAddButton.addActionListener(e -> {
+        JButton isValidButton = WindowUtility.createButton("Is valid?", e -> {
             boolean isValid = blockchain.validateBlockchain();
             JOptionPane.showMessageDialog(null, "The blockchain is " + (isValid ? "" : "not ") + "valid.", "Error", isValid ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
         });
 
-        JButton addBlock = new JButton("Add Block");
-        addBlock.addActionListener(e -> {
+        JButton addBlock = WindowUtility.createButton("Add Block", e -> {
             WindowUtility.open(blockchain);
-            update(blockchain);
+            updateContent(blockchain);
         });
 
-        JPanel leftPanel = createTablePanel(accountTable, accountSearchField, leftAddButton);
-        JPanel rightPanel = createTablePanel(blockTable, addBlock, rightAddButton);
+        JPanel accountPanel = createTablePanel(accountTable, null, addAccountButton);
+        JPanel blockchainPanel = createTablePanel(blockchainTable, addBlock, isValidButton);
 
-        addRightClickDeletion(blockTable, blockchain);
+        addRightClickDeletion(blockchainTable, blockchain);
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
-        gbc.weightx = 0.25;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(leftPanel, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridheight = 1;
-        gbc.weightx = 0.75;
-        mainPanel.add(rightPanel, gbc);
-
-        add(mainPanel);
+        add(WindowUtility.createResizablePanel(.25, accountPanel, blockchainPanel));
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 300);
         setLocationRelativeTo(null);
 
-        update(blockchain);
+        updateContent(blockchain);
 
         setVisible(true);
     }
@@ -105,50 +68,44 @@ public class BlockchainMainWindow extends JFrame {
         mainWindow.toFront();
     }
 
-    private JPanel createTablePanel(JTable table, JTextField searchField, JButton addButton) {
+    private JPanel createTablePanel(JTable table, @Nullable JComponent component1, JComponent component2) {
         JPanel panel = new JPanel(new BorderLayout());
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel controlPanel = new JPanel(new BorderLayout());
 
-        controlPanel.add(searchField, BorderLayout.CENTER);
-        controlPanel.add(addButton, BorderLayout.EAST);
+        if (component1 != null) controlPanel.add(component1, BorderLayout.CENTER);
+        controlPanel.add(component2, BorderLayout.EAST);
 
         panel.add(controlPanel, BorderLayout.SOUTH);
 
         return panel;
     }
 
-    private JPanel createTablePanel(JTable table, JButton button1, JButton button2) {
-        JPanel panel = new JPanel(new BorderLayout());
-
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
-
-        JPanel controlPanel = new JPanel(new BorderLayout());
-
-        controlPanel.add(button1, BorderLayout.CENTER);
-        controlPanel.add(button2, BorderLayout.EAST);
-
-        panel.add(controlPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    public void update(Blockchain blockchain) {
+    public void updateContent(Blockchain blockchain) {
         accountTableModel.setRowCount(0);
-        blockTableModel.setRowCount(0);
+        blockchainTableModel.setRowCount(0);
 
 
         Accounts.getAccount().forEach(account -> {
-            accountTableModel.addRow(new Object[]{account.getPersonUUID(), account.getPersonName(), account.getBalance()});
+            accountTableModel.addRow(new String[]{
+                    account.getPersonUUID().toString(),
+                    account.getPersonName(),
+                    account.getBalance().toString()
+            });
         });
 
         blockchain.getBlocks().forEach(block -> {
             var data = block.getUnmodifiableTransactions();
-            var prevHash = block.getPreviousHash().orElse("null");
             if (data != null)
-                blockTableModel.addRow(new String[]{block.getUuid().toString(), block.getCreationDateTime().toString(), data.toString(), prevHash, block.getHash()});
+                blockchainTableModel.addRow(new String[]{
+                        block.getUuid().toString(),
+                        block.getCreationDateTime().toString(),
+                        String.valueOf(data.size()),
+                        block.getPreviousHashUnsafe().orElse("null"),
+                        block.getHashUnsafe().orElse("null")
+                });
         });
     }
 
@@ -162,7 +119,7 @@ public class BlockchainMainWindow extends JFrame {
                 ((DefaultTableModel) table.getModel()).removeRow(selectedRow);
 
                 blockchain.removeBlockByIndex(selectedRow);
-                update(blockchain);
+                updateContent(blockchain);
             }
         });
 
@@ -190,6 +147,14 @@ public class BlockchainMainWindow extends JFrame {
     }
 
     private static class AccountTable extends DefaultTableModel {
+        public AccountTable(String[] columnNames) {
+            this(columnNames, 0);
+        }
+
+        public AccountTable(String[] columnNames, int rowCount) {
+            super(columnNames, rowCount);
+        }
+
         @Override
         public boolean isCellEditable(int row, int column) {
             return column == 2; // Check if is the balance column

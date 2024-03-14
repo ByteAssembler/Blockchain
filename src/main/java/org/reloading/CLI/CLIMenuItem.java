@@ -13,7 +13,8 @@ public class CLIMenuItem implements CLIItem {
     public void display() {
         System.out.println("\t- " + option);
     }
-    public void execute(){
+
+    public void execute() {
         this.exe.run();
     }
 }

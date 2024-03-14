@@ -1,9 +1,10 @@
 package org.reloading.blockchain;
 
-import org.reloading.utils.Printable;
 import org.reloading.exceptions.BlockInvalidException;
 import org.reloading.exceptions.NegativeAmountException;
 import org.reloading.exceptions.NotEnoughMoneyException;
+import org.reloading.exceptions.PreviousBlockInvalidException;
+import org.reloading.utils.Printable;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -37,7 +38,9 @@ public class Blockchain implements Printable {
         blocks.remove(index);
     }
 
-    public void addBlock(Block block) throws NegativeAmountException, NotEnoughMoneyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, InvalidKeyException, BlockInvalidException {
+    public void addBlock(Block block) throws NegativeAmountException, NotEnoughMoneyException,
+            NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, InvalidKeyException,
+            BlockInvalidException, PreviousBlockInvalidException {
         if (block == null) throw new IllegalArgumentException("Block cannot be null");
 
         if (blocks.isEmpty()) {
@@ -48,7 +51,9 @@ public class Blockchain implements Printable {
 
             if (!block.isValid()) throw new BlockInvalidException("Block is invalid!");
 
+            block.mine();
             blocks.add(block);
+
             return;
         }
 
@@ -58,31 +63,32 @@ public class Blockchain implements Printable {
 
         // The current block sets the previous hash to the hash of the previous block.
         Block previousBlock = getPreviousBlock();
-        block.setPreviousHash(previousBlock.getHash());
+        var previousHash = previousBlock.getHashUnsafe();
+        if (previousHash.isEmpty())
+            throw new PreviousBlockInvalidException("The hash value of the previous block is not given");
+        if (!Block.validateHash(previousHash.get()))
+            throw new PreviousBlockInvalidException("The hash value of the previous block");
+        block.setPreviousHash(previousHash.get());
 
         // Check if sender and receiver are not the same person (in Transaction Constructor)
 
         // Check if the multiple sender have enough money to send
-        if (!block.areTransactionsValidAndSigned()) // if (!block.validateTransitionsByUUID())
+        if (!block.areTransactionsValidAndSigned())
             throw new BlockInvalidException("Transaction/s are not valid");
 
         // Mine the block
         block.mine();
 
         // Check if the block is valid
-        if (!block.isValid()) throw new IllegalArgumentException("Block is not valid. This should not happen!");
+        if (!block.isValid()) throw new RuntimeException("Block is not valid. This should not happen!");
 
 
         // Update the balance of the sender
         // Update the balance of the receiver
-        block.perform();
+        block.performTransactions();
 
         // Add block to the blockchain
         blocks.add(block);
-
-        // Print
-        // System.out.print("Block added: ");
-        // block.print();
     }
 
     public Block getPreviousBlock() {
@@ -94,8 +100,17 @@ public class Blockchain implements Printable {
         if (!blocks.get(0).isGenesisBlockAndIsValid()) return false;
 
         var finalBlock = blocks.stream().skip(1).reduce(blocks.get(0), (previousBlock, currentBlock) -> {
-            if (!currentBlock.getPreviousHash().equals(previousBlock.getHash())) return null;
+            if (previousBlock == null) return null;
+
+            var currentBlockPreviousHashOption = currentBlock.getPreviousHashUnsafe();
+            var previousBlockHashOption = previousBlock.getHashUnsafe();
+
+            if (currentBlockPreviousHashOption.isEmpty()) return null;
+            if (previousBlockHashOption.isEmpty()) return null;
+
+            if (!currentBlockPreviousHashOption.get().equals(previousBlockHashOption.get())) return null;
             if (!currentBlock.isValid()) return null;
+
             return currentBlock;
         });
 

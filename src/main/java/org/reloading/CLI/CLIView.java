@@ -1,11 +1,12 @@
 package org.reloading.CLI;
 
 public class CLIView {
-    public void display(CLIMenu menu){
+    public void display(CLIMenu menu) {
         try {
-            new ProcessBuilder("clear").inheritIO().start().waitFor();
+            // clear the console, do not use a command
+            System.out.print("\033[H\033[2J");
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error clearing the console", e);
         }
 
         menu.display();

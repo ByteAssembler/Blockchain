@@ -51,4 +51,8 @@ public class Accounts {
         else return getAccountByPersonName(nameOrUUID);
 
     }
+
+    public static String[] getColumnNamesForTable() {
+        return new String[]{"UUID", "Name", "Balance"};
+    }
 }

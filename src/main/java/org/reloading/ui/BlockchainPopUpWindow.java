@@ -6,8 +6,6 @@ import org.reloading.blockchain.Transaction;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -15,11 +13,15 @@ import static org.reloading.ui.BlockchainMainWindow.closeForPopups;
 
 public class BlockchainPopUpWindow extends JDialog {
 
-    private final JTable table;
-
     public BlockchainPopUpWindow(BlockchainMainWindow mainWindow, Block block) {
         super(mainWindow, "Transactions of block " + block.getUuid(), true);
         setModal(true);
+
+        if (block.getUnmodifiableTransactions().isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "No transactions to display.", "Error", JOptionPane.ERROR_MESSAGE);
+            closeForPopups(mainWindow, this);
+        }
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -30,23 +32,18 @@ public class BlockchainPopUpWindow extends JDialog {
 
 
         // Must contain at least one transaction
-        var blockDataList = block.getUnmodifiableTransactions();
+        var transactions = block.getUnmodifiableTransactions();
 
-        String[] columnNames = blockDataList.get(0).getColumnNamesForTable();
-        String[][] data = blockDataList.stream().map(Transaction::getDataForTable).toArray(String[][]::new);
+        String[] columnNames = Transaction.getColumnNamesForTable();
+        String[][] data = transactions.stream().map(Transaction::getDataForTable).toArray(String[][]::new);
 
         DefaultTableModel model = new ReadOnlyTableModel(data, columnNames);
-        table = new JTable(model);
+        JTable table = new JTable(model);
 
         JScrollPane scrollPane = new JScrollPane(table);
 
-        JButton closeButton = new JButton("Close");
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                closeForPopups(mainWindow, BlockchainPopUpWindow.this);
-            }
-        });
+        JButton closeButton = WindowUtility.createButton("Close",
+                e -> closeForPopups(mainWindow, BlockchainPopUpWindow.this));
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -56,6 +53,4 @@ public class BlockchainPopUpWindow extends JDialog {
         pack();
         setLocationRelativeTo(mainWindow);
     }
-
-
 }

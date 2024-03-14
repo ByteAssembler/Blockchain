@@ -7,6 +7,10 @@ public class ReadOnlyTableModel extends DefaultTableModel {
     public ReadOnlyTableModel() {
     }
 
+    public ReadOnlyTableModel(Object[] columnNames) {
+        this(columnNames, 0);
+    }
+
     public ReadOnlyTableModel(int rowCount, int columnCount) {
         super(rowCount, columnCount);
     }

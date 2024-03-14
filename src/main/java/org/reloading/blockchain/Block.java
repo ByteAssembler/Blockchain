@@ -128,7 +128,7 @@ public class Block implements Print {
     }
 
     public void perform() {
-        transactions.forEach(BlockDataProvider::perform);
+        transactions.forEach(Transaction::perform);
     }
 
     public void signTransaction() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {

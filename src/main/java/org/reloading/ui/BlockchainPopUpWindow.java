@@ -1,7 +1,7 @@
 package org.reloading.ui;
 
 import org.reloading.blockchain.Block;
-import org.reloading.blockchain.BlockDataProvider;
+import org.reloading.blockchain.Transaction;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -33,7 +33,7 @@ public class BlockchainPopUpWindow extends JDialog {
         var blockDataList = block.getUnmodifiableTransactions();
 
         String[] columnNames = blockDataList.get(0).getColumnNamesForTable();
-        String[][] data = blockDataList.stream().map(BlockDataProvider::getDataForTable).toArray(String[][]::new);
+        String[][] data = blockDataList.stream().map(Transaction::getDataForTable).toArray(String[][]::new);
 
         DefaultTableModel model = new ReadOnlyTableModel(data, columnNames);
         table = new JTable(model);

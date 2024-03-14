@@ -1,6 +1,7 @@
 package org.reloading.blockchain;
 
 import org.reloading.exceptions.InvalidTransactionException;
+import org.reloading.exceptions.NotEnoughMoneyException;
 import org.reloading.persons.Account;
 
 import java.math.BigDecimal;
@@ -12,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public class Transaction implements BlockDataProvider {
+public class Transaction {
     private final UUID uuid;
     private final Account accountSender;
     private final Account accountReceiver;
@@ -42,13 +43,11 @@ public class Transaction implements BlockDataProvider {
         this(accountSender, accountReceiver, BigDecimal.valueOf(amount));
     }
 
-    @Override
     public void sign() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         String transactionData = accountSender.getPersonUUID().toString() + accountReceiver.getPersonUUID().toString() + amount;
         this.signature = accountSender.signTransaction(transactionData);
     }
 
-    @Override
     public boolean verify() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException {
         if (signature == null) return false;
         String transactionData = accountSender.getPersonUUID().toString() + accountReceiver.getPersonUUID().toString() + amount;
@@ -56,30 +55,30 @@ public class Transaction implements BlockDataProvider {
     }
 
 
-    @Override
-    public void perform() {
+    public boolean perform() {
         try {
             if (verify()) {
                 accountSender.removeAmount(amount);
                 accountReceiver.addAmount(amount);
+                return true;
             }
-        } catch (Exception e) {
+        } catch (NotEnoughMoneyException | NoSuchAlgorithmException | InvalidKeyException | SignatureException |
+                 InvalidKeySpecException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
-    @Override
     public void undo() {
         accountSender.addAmount(amount);
         accountReceiver.removeAmount(amount);
     }
 
-    @Override
     public boolean isValid() {
         return validateTransitionsByUUID(List.of(this));
     }
 
-    @Override
     public UUID getUuid() {
         return uuid;
     }
@@ -104,12 +103,10 @@ public class Transaction implements BlockDataProvider {
         return new String[]{"UUID", "Sender", "Receiver", "Amount"};
     }
 
-    @Override
     public String[] getColumnNamesForTable() {
         return getColumnNamesForTableStatic();
     }
 
-    @Override
     public String[] getDataForTable() {
         return new String[]{
                 uuid.toString(),

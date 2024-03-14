@@ -1,6 +1,7 @@
 package org.reloading.persons;
 
-import org.reloading.Print;
+import org.reloading.exceptions.AccountAlreadyExistsException;
+import org.reloading.utils.Printable;
 import org.reloading.exceptions.NegativeAmountException;
 import org.reloading.exceptions.NotEnoughMoneyException;
 import org.reloading.secure.KeyPairGenerator;
@@ -13,12 +14,12 @@ import java.util.UUID;
 
 import static org.reloading.persons.Accounts.account;
 
-public class Account implements Print {
+public class Account implements Printable {
     private final Person person;
-    private BigDecimal balance;
     private final KeyPair keyPair;
+    private BigDecimal balance;
 
-    public Account(Person person, BigDecimal balance) {
+    public Account(Person person, BigDecimal balance) throws AccountAlreadyExistsException {
         this.person = person;
         this.balance = balance;
 
@@ -26,16 +27,16 @@ public class Account implements Print {
 
         // Check if the account already exists - only for the CLI
         if (Accounts.checkIfAccountWithPersonNameExists(person.getName()))
-            throw new IllegalArgumentException("Account: Account with name (similar) " + person.getName() + " already exists.");
+            throw new AccountAlreadyExistsException("Account: Account with name (similar) " + person.getName() + " already exists.");
 
         account.add(this);
     }
 
-    public Account(String personName, BigDecimal balance) {
+    public Account(String personName, BigDecimal balance) throws AccountAlreadyExistsException {
         this(new Person(personName), balance);
     }
 
-    public Account(String personName, double balance) {
+    public Account(String personName, double balance) throws AccountAlreadyExistsException {
         this(new Person(personName), BigDecimal.valueOf(balance));
     }
 
@@ -81,17 +82,23 @@ public class Account implements Print {
         return sig.verify(signatureBytes);
     }
 
-    public void addAmount(BigDecimal amount) {
+    public void addAmount(BigDecimal amount) throws NegativeAmountException {
+        if (amount.compareTo(BigDecimal.ZERO) < 0)
+            throw new NegativeAmountException("Account: Cannot add negative amount to " + getPersonName() + " (" + this.balance + ")");
+
         this.balance = this.balance.add(amount);
-        // this.balance += amount;
     }
 
-    public void removeAmount(BigDecimal amount) throws NotEnoughMoneyException {
+    public void removeAmount(BigDecimal amount) throws NegativeAmountException, NotEnoughMoneyException {
         BigDecimal tmp = this.balance.subtract(amount);
+
+        if (amount.compareTo(BigDecimal.ZERO) < 0)
+            throw new NegativeAmountException("Account: Cannot remove negative amount from " + getPersonName() + " (" + this.balance + ")");
 
         if (tmp.compareTo(BigDecimal.ZERO) < 0)
             throw new NotEnoughMoneyException("Account: Not enough money to remove " + amount + " from " + getPersonName() + " (" + this.balance + ")");
-        else this.balance = tmp;
+
+        this.balance = tmp;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package org.reloading.ui;
 
 import org.reloading.blockchain.Transaction;
+import org.reloading.exceptions.InvalidTransactionException;
+import org.reloading.exceptions.NegativeAmountException;
 import org.reloading.persons.Account;
 import org.reloading.persons.Accounts;
 import org.reloading.persons.Person;
@@ -31,7 +33,11 @@ public class InputUtility {
             return createTransactionDialog();
         }
 
-        return Optional.of(new Transaction(sender, receiver, amount));
+        try {
+            return Optional.of(new Transaction(sender, receiver, amount));
+        } catch (NegativeAmountException | InvalidTransactionException e) {
+            return Optional.empty();
+        }
     }
 
     public static Account getPersonDialog(Person.Type personType) {

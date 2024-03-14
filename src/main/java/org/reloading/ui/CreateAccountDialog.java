@@ -1,5 +1,6 @@
 package org.reloading.ui;
 
+import org.reloading.exceptions.AccountAlreadyExistsException;
 import org.reloading.persons.Account;
 import org.reloading.persons.Accounts;
 
@@ -18,7 +19,15 @@ public class CreateAccountDialog {
             return createAccount();
         }
 
-        Account account = new Account(name, initialAmount);
+        Account account;
+        try {
+            account = new Account(name, initialAmount);
+        } catch (AccountAlreadyExistsException e) {
+            // This should never happen!
+            JOptionPane.showMessageDialog(null, e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException(e);
+        }
 
         JOptionPane.showMessageDialog(null, "Account created with UUID: " + account.getPersonUUID(),
                 "Account Created", JOptionPane.INFORMATION_MESSAGE);

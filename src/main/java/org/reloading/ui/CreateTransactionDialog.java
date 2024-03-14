@@ -4,6 +4,8 @@ import org.reloading.blockchain.Block;
 import org.reloading.blockchain.Blockchain;
 import org.reloading.blockchain.Transaction;
 import org.reloading.exceptions.BlockInvalidException;
+import org.reloading.exceptions.NegativeAmountException;
+import org.reloading.exceptions.NotEnoughMoneyException;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -12,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,11 +56,14 @@ public class CreateTransactionDialog extends JDialog {
                 try {
                     transaction.sign();
                 } catch (NoSuchAlgorithmException ex) {
-                    throw new RuntimeException(ex);
-                } catch (InvalidKeyException ex) {
-                    throw new RuntimeException(ex);
+                    JOptionPane.showMessageDialog(null, ex.getMessage(),
+                            "Error: The algorithm for the signature is not given", JOptionPane.ERROR_MESSAGE);
                 } catch (SignatureException ex) {
-                    throw new RuntimeException(ex);
+                    JOptionPane.showMessageDialog(null, ex.getMessage(),
+                            "Error: The signature is not valid", JOptionPane.ERROR_MESSAGE);
+                } catch (InvalidKeyException ex) {
+                    JOptionPane.showMessageDialog(null, ex.getMessage(),
+                            "Error: The signature key ist not valid", JOptionPane.ERROR_MESSAGE);
                 }
             }
 
@@ -75,6 +81,37 @@ public class CreateTransactionDialog extends JDialog {
 
             try {
                 blockchain.addBlock(block);
+
+                JOptionPane.showMessageDialog(null, "Transactions added to blockchain.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                mainWindow.update(blockchain);
+                closeForPopups(mainWindow, CreateTransactionDialog.this);
+            } catch (BlockInvalidException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: Block is invalid", JOptionPane.ERROR_MESSAGE);
+            } catch (NoSuchAlgorithmException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: The algorithm for the signature is not given", JOptionPane.ERROR_MESSAGE);
+            } catch (SignatureException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: The signature is not valid", JOptionPane.ERROR_MESSAGE);
+            } catch (InvalidKeyException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: The signature key ist not valid", JOptionPane.ERROR_MESSAGE);
+            } catch (InvalidKeySpecException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: The signature key specifications are not valid", JOptionPane.ERROR_MESSAGE);
+            } catch (NegativeAmountException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: The amount can not be negative", JOptionPane.ERROR_MESSAGE);
+            } catch (NotEnoughMoneyException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "Error: An account does not have enough money", JOptionPane.ERROR_MESSAGE);
+            }
+
+
+
+            /*try {
+                blockchain.addBlock(block);
                 JOptionPane.showMessageDialog(null, "Transactions added to blockchain.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 mainWindow.update(blockchain);
                 closeForPopups(mainWindow, CreateTransactionDialog.this);
@@ -83,7 +120,9 @@ public class CreateTransactionDialog extends JDialog {
             } catch (BlockInvalidException ex) {
                 JOptionPane.showMessageDialog(mainWindow, "Block is invalid!", "Error", JOptionPane.ERROR_MESSAGE);
                 // throw new RuntimeException(ex);
-            }
+            } catch (InvalidKeySpecException ex) {
+                throw new RuntimeException(ex);
+            }*/
         });
 
         JButton addButton = new JButton("Add Transaction");

@@ -1,42 +1,46 @@
 package org.reloading.blockchain;
 
-import org.reloading.Print;
+import org.reloading.exceptions.BlockInvalidException;
+import org.reloading.exceptions.NegativeAmountException;
+import org.reloading.exceptions.NotEnoughMoneyException;
 import org.reloading.secure.Encrypt;
+import org.reloading.utils.Printable;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.security.spec.InvalidKeySpecException;
+import java.util.*;
 
-public class Block implements Print {
-    private boolean mined = false;
+public class Block implements Printable {
     private final UUID uuid;
     private final Date creationDateTime;
     private final List<Transaction> transactions;
+    private boolean mined = false;
     private String previousHash;
     private String hash = null;
     private long nonce = 0;
 
 
-    public Block(UUID uuid, String previousHash, List<Transaction> transactions, final Date creationDateTime) {
+    private Block(UUID uuid, String previousHash, List<Transaction> transactions, final Date creationDateTime) {
         this.uuid = uuid;
         this.previousHash = previousHash;
         this.transactions = transactions;
         this.creationDateTime = creationDateTime;
     }
 
-    public Block(UUID uuid, List<Transaction> transactions, Date creationDateTime) {
+    private Block(UUID uuid, List<Transaction> transactions, Date creationDateTime) {
         this(uuid, null, transactions, creationDateTime);
     }
 
-    public Block(UUID uuid, String previousHash, List<Transaction> transactions) {
+    /**
+     * Used to create the genesis block
+     */
+    private Block(UUID uuid, String previousHash, List<Transaction> transactions) {
         this(uuid, previousHash, transactions, new Date());
     }
 
-    public Block(String previousHash, List<Transaction> transactions) {
+    private Block(String previousHash, List<Transaction> transactions) {
         this(UUID.randomUUID(), previousHash, transactions);
     }
 
@@ -44,6 +48,18 @@ public class Block implements Print {
         this(null, transactions);
     }
 
+    public static Block createGenesisBlock() {
+        UUID genesisUUID = new UUID(0, 0);
+        String emptyHash = "0".repeat(64);
+
+        Block genesisBlock = new Block(genesisUUID, emptyHash, null);
+        try {
+            genesisBlock.mine();
+        } catch (BlockInvalidException e) {
+            throw new RuntimeException(e);
+        }
+        return genesisBlock;
+    }
 
     public UUID getUuid() {
         return uuid;
@@ -53,38 +69,39 @@ public class Block implements Print {
         return creationDateTime;
     }
 
-    @Deprecated
-    public List<Transaction> getTransactions() {
-        if (transactions == null) return Collections.emptyList();
-        return transactions;
-    }
-
     public List<Transaction> getUnmodifiableTransactions() {
         if (transactions == null) return Collections.emptyList();
         return Collections.unmodifiableList(transactions);
+    }
+
+    @Deprecated
+    public Optional<String> getPreviousHash() {
+        // if (previousHash == null) throw new NullPointerException("The previous hash is null");
+        if (previousHash.isEmpty()) return Optional.empty();
+        return Optional.of(previousHash);
     }
 
     public void setPreviousHash(String previousHash) {
         this.previousHash = previousHash;
     }
 
-    @Deprecated
-    public String getPreviousHash() {
-        return previousHash;
-    }
-
-    public String calculateHash() {
+    private void calculateHash() {
         hash = Encrypt.sha256(this.toString());
-        return hash;
     }
 
-    @Deprecated
+    @Deprecated // (forRemoval = true)
     public String getHash() {
         return hash;
     }
 
-    public void mine() {
-        if (previousHash == null) throw new IllegalArgumentException("Block: Previous hash cannot be null");
+    public String getHashOrMine() throws BlockInvalidException {
+        mine();
+        return hash;
+    }
+
+    public void mine() throws BlockInvalidException {
+        if (previousHash == null) throw new BlockInvalidException("The previous hash was not given." +
+                "Previous hash cannot be null");
 
         calculateHash();
         while (!hash.startsWith(Blockchain.difficultyPrefix)) {
@@ -100,38 +117,35 @@ public class Block implements Print {
     }
 
     public boolean isGenesisBlock() {
+        // Optional: Check that the UUID bytes from the Genesis block are zero.
+        // Optional: Check that the hash contains only zeros
         return transactions == null;
     }
 
     public boolean isValid() {
+        if (hash == null || previousHash == null) return false;
         return this.hash.startsWith(Blockchain.difficultyPrefix)
                 && this.previousHash.startsWith(Blockchain.difficultyPrefix)
-                && areTransactionsValid();
+                && areTransactionsValidAndSigned();
     }
 
     public boolean isGenesisBlockAndIsValid() {
         return isGenesisBlock() && isValid();
     }
 
-    public static Block createGenesisBlock() {
-        UUID genesisUUID = new UUID(0, 0);
-        String emptyHash = "0".repeat(64);
-
-        Block genesisBlock = new Block(genesisUUID, emptyHash, null);
-        genesisBlock.mine();
-        return genesisBlock;
+    public boolean areTransactionsValidAndSigned() {
+        return Transaction.validateTransitionsByUUID(getUnmodifiableTransactions()) && areTransactionsSignaturesValid();
     }
 
-
-    public boolean areTransactionsValid() {
-        return Transaction.validateTransitionsByUUID(getUnmodifiableTransactions());
+    private boolean areTransactionsSignaturesValid() {
+        return Transaction.areTransactionsSignaturesValid(getUnmodifiableTransactions());
     }
 
-    public void perform() {
-        transactions.forEach(Transaction::perform);
+    public void perform() throws NegativeAmountException, NotEnoughMoneyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, InvalidKeyException {
+        for (Transaction transaction : transactions) transaction.perform();
     }
 
-    public void signTransaction() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    public void signTransactions() throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         for (Transaction transaction : transactions) transaction.sign();
     }
 

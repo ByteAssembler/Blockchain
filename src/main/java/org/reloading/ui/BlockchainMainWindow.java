@@ -146,8 +146,9 @@ public class BlockchainMainWindow extends JFrame {
 
         blockchain.getBlocks().forEach(block -> {
             var data = block.getUnmodifiableTransactions();
+            var prevHash = block.getPreviousHash().orElse("null");
             if (data != null)
-                blockTableModel.addRow(new String[]{block.getUuid().toString(), block.getCreationDateTime().toString(), data.toString(), block.getPreviousHash(), block.getHash()});
+                blockTableModel.addRow(new String[]{block.getUuid().toString(), block.getCreationDateTime().toString(), data.toString(), prevHash, block.getHash()});
         });
     }
 

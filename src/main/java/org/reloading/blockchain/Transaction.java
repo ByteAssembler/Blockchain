@@ -1,6 +1,7 @@
 package org.reloading.blockchain;
 
 import org.reloading.exceptions.InvalidTransactionException;
+import org.reloading.exceptions.NegativeAmountException;
 import org.reloading.exceptions.NotEnoughMoneyException;
 import org.reloading.persons.Account;
 
@@ -20,11 +21,11 @@ public class Transaction {
     private final BigDecimal amount;
     private String signature;
 
-    public Transaction(final Account accountSender, final Account accountReceiver, final BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidTransactionException("Amount must be positive");
+    public Transaction(final Account accountSender, final Account accountReceiver, final BigDecimal amount) throws NegativeAmountException, InvalidTransactionException {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new NegativeAmountException("Amount must be positive");
 
-        if (accountSender.equals(accountReceiver)) throw new InvalidTransactionException("Transaction: Sender and " +
-                "receiver cannot be the same person");
+        if (accountSender.equals(accountReceiver))
+            throw new InvalidTransactionException("Transaction: Sender and " + "receiver cannot be the same person");
 
         /*
         // Check if the sender has enough money to send
@@ -39,8 +40,48 @@ public class Transaction {
         this.amount = amount;
     }
 
-    public Transaction(final Account accountSender, final Account accountReceiver, final double amount) {
+    public Transaction(final Account accountSender, final Account accountReceiver, final double amount) throws NegativeAmountException, InvalidTransactionException {
         this(accountSender, accountReceiver, BigDecimal.valueOf(amount));
+    }
+
+    public static String[] getColumnNamesForTableStatic() {
+        return new String[]{"UUID", "Sender", "Receiver", "Amount"};
+    }
+
+    public static boolean validateTransitionsByUUID(List<Transaction> transactions) {
+        HashMap<UUID, BigDecimal> map = new HashMap<>(transactions.size());
+
+        for (Transaction transaction : transactions) {
+            Account sender = transaction.getAccountSender();
+            Account receiver = transaction.getAccountReceiver();
+
+            UUID senderUUID = sender.getPersonUUID();
+            UUID receiverUUID = receiver.getPersonUUID();
+
+            map.putIfAbsent(senderUUID, sender.getBalance()); // if sender not in map, add it
+            map.putIfAbsent(receiverUUID, receiver.getBalance()); // if receiver not in map, add it
+
+            BigDecimal newBalanceSender = map.get(senderUUID).subtract(transaction.getAmount());
+            BigDecimal newBalanceReceiver = map.get(receiverUUID).add(transaction.getAmount());
+            if (newBalanceReceiver.compareTo(BigDecimal.ZERO) < 0) return false;
+
+            map.put(senderUUID, newBalanceSender);
+            map.put(receiverUUID, newBalanceReceiver);
+        }
+
+        return true;
+    }
+
+    public static boolean areTransactionsSignaturesValid(List<Transaction> unmodifiableTransactions) {
+        for (Transaction transaction : unmodifiableTransactions) {
+            try {
+                if (!transaction.verify()) return false;
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException | SignatureException | InvalidKeyException e) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void sign() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -54,23 +95,14 @@ public class Transaction {
         return accountReceiver.verifyTransaction(transactionData, signature, accountSender.getKeyPair().getPublic());
     }
 
-
-    public boolean perform() {
-        try {
-            if (verify()) {
-                accountSender.removeAmount(amount);
-                accountReceiver.addAmount(amount);
-                return true;
-            }
-        } catch (NotEnoughMoneyException | NoSuchAlgorithmException | InvalidKeyException | SignatureException |
-                 InvalidKeySpecException e) {
-            e.printStackTrace();
+    public void perform() throws NegativeAmountException, NotEnoughMoneyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, InvalidKeyException {
+        if (verify()) {
+            accountSender.removeAmount(amount);
+            accountReceiver.addAmount(amount);
         }
-
-        return false;
     }
 
-    public void undo() {
+    public void undo() throws NegativeAmountException, NotEnoughMoneyException {
         accountSender.addAmount(amount);
         accountReceiver.removeAmount(amount);
     }
@@ -99,55 +131,17 @@ public class Transaction {
         return signature;
     }
 
-    public static String[] getColumnNamesForTableStatic() {
-        return new String[]{"UUID", "Sender", "Receiver", "Amount"};
-    }
-
     public String[] getColumnNamesForTable() {
         return getColumnNamesForTableStatic();
     }
 
     public String[] getDataForTable() {
-        return new String[]{
-                uuid.toString(),
-                accountSender.getPersonName(),
-                accountReceiver.getPersonName(),
-                String.valueOf(amount)
-        };
-    }
-
-    public static boolean validateTransitionsByUUID(List<Transaction> transactions) {
-        HashMap<UUID, BigDecimal> map = new HashMap<>(transactions.size());
-
-        for (Transaction transaction : transactions) {
-            Account sender = transaction.getAccountSender();
-            Account receiver = transaction.getAccountReceiver();
-
-            UUID senderUUID = sender.getPersonUUID();
-            UUID receiverUUID = receiver.getPersonUUID();
-
-            map.putIfAbsent(senderUUID, sender.getBalance()); // if sender not in map, add it
-            map.putIfAbsent(receiverUUID, receiver.getBalance()); // if receiver not in map, add it
-
-            BigDecimal newBalanceSender = map.get(senderUUID).subtract(transaction.getAmount());
-            BigDecimal newBalanceReceiver = map.get(receiverUUID).add(transaction.getAmount());
-            if (newBalanceReceiver.compareTo(BigDecimal.ZERO) < 0) return false;
-
-            map.put(senderUUID, newBalanceSender);
-            map.put(receiverUUID, newBalanceReceiver);
-        }
-
-        return true;
+        return new String[]{uuid.toString(), accountSender.getPersonName(), accountReceiver.getPersonName(), String.valueOf(amount)};
     }
 
     @Override
     public String toString() {
-        return "Transaction{" +
-                "sender=" + accountSender +
-                ", receiver=" + accountReceiver +
-                ", amount=" + amount +
-                ", signature='" + signature + '\'' +
-                '}';
+        return "Transaction{" + "sender=" + accountSender + ", receiver=" + accountReceiver + ", amount=" + amount + ", signature='" + signature + '\'' + '}';
     }
 
     @Override

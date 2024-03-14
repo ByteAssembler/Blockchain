@@ -1,6 +1,6 @@
-package org.reloading;
+package org.reloading.utils;
 
-public interface Print {
+public interface Printable {
     default void print() {
         System.out.println(this);
     }

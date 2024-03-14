@@ -10,9 +10,8 @@ public class KeyPairGenerator {
             generator.initialize(2048);
             return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            // that should never happen
+            throw new RuntimeException(e);
         }
-
-        return null;
     }
 }

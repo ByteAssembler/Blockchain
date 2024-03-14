@@ -1,27 +1,33 @@
 package org.reloading.blockchain;
 
-import org.reloading.Print;
+import org.reloading.utils.Printable;
 import org.reloading.exceptions.BlockInvalidException;
+import org.reloading.exceptions.NegativeAmountException;
+import org.reloading.exceptions.NotEnoughMoneyException;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Blockchain implements Print {
-    public static int hashPrefixDifficulty = 4;
-    public static String difficultyPrefix = "0".repeat(hashPrefixDifficulty);
+public class Blockchain implements Printable {
+    public static int hashDefaultPrefixDifficulty = 4;
+    public static String difficultyPrefix = "0".repeat(hashDefaultPrefixDifficulty);
+    // private final int difficulty;
     private final List<Block> blocks;
 
     public Blockchain() {
         this(new ArrayList<>());
     }
 
-    public Blockchain(List<Block> blocks) {
+    public Blockchain(List<Block> blocks/*, int difficulty*/) {
         if (blocks == null) throw new IllegalArgumentException("List<Block> blocks cannot be null!");
+        // if (difficulty < 0) throw new IllegalArgumentException("Difficulty cannot be negative");
         if (blocks.isEmpty()) blocks.add(Block.createGenesisBlock());
         this.blocks = blocks;
+        // this.difficulty = difficulty;
     }
 
     // Only for the CLI
@@ -31,42 +37,45 @@ public class Blockchain implements Print {
         blocks.remove(index);
     }
 
-    public void addBlock(Block block) throws BlockInvalidException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    public void addBlock(Block block) throws NegativeAmountException, NotEnoughMoneyException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, InvalidKeyException, BlockInvalidException {
         if (block == null) throw new IllegalArgumentException("Block cannot be null");
-        // throw new IllegalArgumentException("A non genesis block must contain at least one transaction");
 
         if (blocks.isEmpty()) {
-            // This is the genesis block
+            // This should be the genesis block
             if (!block.isGenesisBlock())
-                throw new BlockInvalidException("First Block in Blockchain has to be a Genesis Block!");
+                throw new BlockInvalidException("The first block in the blockchain should be the Genesis block." +
+                        "The given block is not a valid Genesis block.!");
+
             if (!block.isValid()) throw new BlockInvalidException("Block is invalid!");
+
             blocks.add(block);
             return;
         }
 
-        // Current block set the previous hash to the hash of the previous block
+        if (block.getUnmodifiableTransactions().isEmpty())
+            throw new BlockInvalidException("A non genesis block must contain at least one transaction");
+
+
+        // The current block sets the previous hash to the hash of the previous block.
         Block previousBlock = getPreviousBlock();
         block.setPreviousHash(previousBlock.getHash());
 
         // Check if sender and receiver are not the same person (in Transaction Constructor)
 
         // Check if the multiple sender have enough money to send
-        if (!block.areTransactionsValid()) // if (!block.validateTransitionsByUUID())
-            throw new BlockInvalidException("Block: Transaction/s are not valid");
-
-        block.signTransaction();
+        if (!block.areTransactionsValidAndSigned()) // if (!block.validateTransitionsByUUID())
+            throw new BlockInvalidException("Transaction/s are not valid");
 
         // Mine the block
         block.mine();
 
         // Check if the block is valid
-        if (!block.isValid()) throw new IllegalArgumentException("Block: Block is not valid. This should not happen!");
+        if (!block.isValid()) throw new IllegalArgumentException("Block is not valid. This should not happen!");
 
 
         // Update the balance of the sender
         // Update the balance of the receiver
-        // TODO: block.getTransactions().forEach(Transaction::performTransaction);
-        block.perform(); // TODO: check
+        block.perform();
 
         // Add block to the blockchain
         blocks.add(block);

@@ -1,5 +1,7 @@
 package org.reloading.CLI;
 
+import java.io.IOException;
+
 public class CLI {
     public static void main(String[] args) {
         CLIController controller = new CLIController();
@@ -7,7 +9,11 @@ public class CLI {
 
         while (!controller.isStopped()) {
             view.display(controller.getMenu());
-            controller.select(view);
+            try {
+                controller.select(view);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
